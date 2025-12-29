@@ -1,0 +1,144 @@
+﻿HardWare :
+	-Memory : 
+		• 4096 (0x1000) memory locations, all of which are 8 bits 
+		• the CHIP-8 interpreter itself occupies the first 512 bytes of the memory space -> system begin at memory location 512 (0x200) and do not access any of the memory below
+		• The uppermost 256 bytes (0xF00-0xFFF) are reserved for display refresh
+		• the 96 bytes below that (0xEA0-0xEFF) were reserved for the call stack, internal use, and other variables.
+
+		○ modern CHIP-8 implementations, where the interpreter is running natively outside the 4K memory space, 
+		  there is no need to avoid the lower 512 bytes of memory (0x000-0x1FF), and it is common to store font data there.
+
+	-Registers :
+		• 16 8-bit data registers named V0 to VF.
+		• VF register doubles as a flag for some instructions
+		  In an addition operation, VF is the carry flag, while in subtraction, it is the "no borrow" flag. In the draw instruction VF is set upon pixel collision.
+		• The address register, which is named I, is 12 bits wide and is used with several opcodes that involve memory operations.
+
+	-Stack
+		• only used to store return addresses when subroutines are called.
+		• The original RCA 1802 version allocated 48 bytes for up to 12 levels of nesting
+
+	-Timers:
+		• both count down at 60 hertz, until they reach 0.
+		• Delay timer: This timer is intended to be used for timing the events of games. Its value can be set and read.
+		• Sound timer: This timer is used for sound effects. When its value is nonzero, a beeping sound is made. Its value can only be set.
+
+	-Input
+		• hex keyboard that has 16 keys ranging 0 to F.
+		• "8", "4", "6", and "2" keys are typically used for directional input.
+		• Three opcodes are used to detect input.
+			○ One skips an instruction if a specific key is pressed
+			○ another does the same if a specific key is not pressed.
+			○ The third waits for a key press, and then stores it in one of the data registers.
+
+
+
+
+Graphics and Sound:
+	-Display :
+		• display resolution is 64×32 pixels.
+		• color is monochrome.
+		• Graphics are drawn to the screen solely by drawing sprites:
+			○ 8 pixels wide
+			○ may be from 1 to 15 pixels in height.
+			○ Sprite pixels are XOR'd with corresponding screen pixels.
+			○ sprite pixels that are set flip the color of the corresponding screen pixel, while unset sprite pixels do nothing.
+			○ collision detection : carry flag (VF) is set to 1 if any screen pixels are flipped from set to unset when a sprite is drawn and set to 0 otherwise.
+
+	-Sound :
+		• beeping sound is played when the value of the sound timer is nonzero.
+
+
+
+Opcode table : 
+	-title :
+		• CHIP-8 has 35 opcodes, which are all two bytes long and stored big-endian.
+
+	-Symbols :
+		• NNN: address
+		• NN: 8-bit constant
+		• N: 4-bit constant
+		• X and Y: 4-bit register identifier
+		• PC : Program Counter
+		• I : 12bit register (For memory address) (Similar to void pointer)
+		• VN: One of the 16 available variables. N may be 0 to F (hexadecimal)
+
+	- SUPER-CHIP specification from 1991 (without the additional opcodes that provide extended functionality) : 
+	------------------------------------------------------------------------------------------------------------------------
+		Opcode	| Type		| C Pseudocode		| Explanation 
+		-----------------------------------------------------------------------------------------------------------------
+		0NNN    | Call		|					| Calls machine code routine (RCA 1802 for COSMAC VIP) at address NNN.
+		-----------------------------------------------------------------------------------------------------------------
+		00E0    | Display   | disp_clear()      | Clears the screen.
+		-----------------------------------------------------------------------------------------------------------------
+		00EE    | Flow      | return;           | Returns from a subroutine.
+		-----------------------------------------------------------------------------------------------------------------
+		1NNN    | Flow      | goto NNN;			| Jumps to address NNN.
+		-----------------------------------------------------------------------------------------------------------------
+		2NNN    | Flow		| *(0xNNN)()		| Calls subroutine at NNN.
+		-----------------------------------------------------------------------------------------------------------------
+		3XNN    | Cond		| if (Vx == NN)		| Skips the next instruction if VX equals NN (usually the next instruction is a jump to skip a code block).
+		-----------------------------------------------------------------------------------------------------------------
+		4XNN    | Cond		| if (Vx != NN)		| Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block).
+		-----------------------------------------------------------------------------------------------------------------
+		5XY0    | Cond		| if (Vx == Vy)		| Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block).
+		-----------------------------------------------------------------------------------------------------------------
+		6XNN    | Const		| Vx = NN			| Sets VX to NN.
+		-----------------------------------------------------------------------------------------------------------------
+		7XNN    | Const		| Vx += NN			| Adds NN to VX (carry flag is not changed).
+		-----------------------------------------------------------------------------------------------------------------
+		8XY0    | Assig     | Vx = Vy			| Sets VX to the value of VY.
+		-----------------------------------------------------------------------------------------------------------------
+		8XY1    | BitOp		| Vx |= Vy			| Sets VX to VX or VY. (bitwise OR operation).
+		-----------------------------------------------------------------------------------------------------------------
+		8XY2    | BitOp		| Vx &= Vy			| Sets VX to VX and VY. (bitwise AND operation).
+		-----------------------------------------------------------------------------------------------------------------
+		8XY3    | BitOp		| Vx ^= Vy			| Sets VX to VX xor VY.
+		-----------------------------------------------------------------------------------------------------------------
+		8XY4    | Math		| Vx += Vy			| Adds VY to VX. VF is set to 1 when there's an overflow, and to 0 when there is not.
+		-----------------------------------------------------------------------------------------------------------------
+		8XY5    | Math		| Vx -= Vy			| VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not)
+		-----------------------------------------------------------------------------------------------------------------
+		8XY6    | BitOp		| Vx >>= 1			| Shifts VX to the right by 1, then stores the least significant bit of VX prior to the shift into VF.
+		-----------------------------------------------------------------------------------------------------------------
+		8XY7    | Math		| Vx = Vy - Vx		| Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VY >= VX).
+		-----------------------------------------------------------------------------------------------------------------
+		8XYE    | BitOp		| Vx <<= 1			| Shifts VX to the left by 1, then sets VF to 1 if the most significant bit of VX prior to that shift was set, or to 0 if it was unset.
+		-----------------------------------------------------------------------------------------------------------------
+		9XY0    | Cond		| if (Vx != Vy)		| Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block).
+		-----------------------------------------------------------------------------------------------------------------
+		ANNN    | MEM		| I = NNN			| Sets I to the address NNN.
+		-----------------------------------------------------------------------------------------------------------------
+		BNNN    | Flow		| PC = V0 + NNN		| Jumps to the address NNN plus V0.
+		-----------------------------------------------------------------------------------------------------------------
+		CXNN    | Rand		| Vx = rand() & NN  | Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN.
+		-----------------------------------------------------------------------------------------------------------------
+		DXYN    | Display	| draw(Vx, Vy, N)   | Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen.
+		-----------------------------------------------------------------------------------------------------------------
+		EX9E    | KeyOp		| if (key() == Vx)  | Skips the next instruction if the key stored in VX(only consider the lowest nibble) is pressed (usually the next instruction is a jump to skip a code block).[
+		-----------------------------------------------------------------------------------------------------------------
+		EXA1    | KeyOp		| if (key() != Vx)  | Skips the next instruction if the key stored in VX(only consider the lowest nibble) is not pressed (usually the next instruction is a jump to skip a code block).
+		-----------------------------------------------------------------------------------------------------------------
+		FX07    | Timer		| Vx = get_delay()  | Sets VX to the value of the delay timer.
+		-----------------------------------------------------------------------------------------------------------------
+		FX0A    | KeyOp		| Vx = get_key()	| A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event, delay and sound timers should continue processing).
+		-----------------------------------------------------------------------------------------------------------------
+		FX15    | Timer		| delay_timer(Vx)   | Sets the delay timer to VX.
+		-----------------------------------------------------------------------------------------------------------------
+		FX18    | Sound		| sound_timer(Vx)   | Sets the sound timer to VX.
+		-----------------------------------------------------------------------------------------------------------------
+		FX1E    | MEM		| 	I += Vx			| Adds VX to I. VF is not affected.
+		-----------------------------------------------------------------------------------------------------------------
+		FX29    | MEM		| I = sprite_addr[Vx] | Sets I to the location of the sprite for the character in VX(only consider the lowest nibble). Characters 0-F (in hexadecimal) are represented by a 4x5 font.
+		-----------------------------------------------------------------------------------------------------------------
+		FX33    | BCD		| set_BCD(Vx)		  |
+								*(I+0) = BCD(3);  | Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
+								*(I+1) = BCD(2);  |
+								*(I+2) = BCD(1);  |
+		-----------------------------------------------------------------------------------------------------------------
+		FX55    | MEM		| reg_dump(Vx, &I)	  | Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.
+		-----------------------------------------------------------------------------------------------------------------
+		FX65    | MEM		| reg_load(Vx, &I)	  | Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified.
+		-----------------------------------------------------------------------------------------------------------------
+
+		
