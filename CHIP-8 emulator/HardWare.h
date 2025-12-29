@@ -22,7 +22,7 @@ typedef struct {
     bit16 PC;           // Program Counter 
     bit16 I;            // Index Register 
 
-    // המחסנית (Stack)
+    //(Stack)
     bit16 stack[16];    
     bit8  SP;           // Stack Pointer 
 
