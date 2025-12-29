@@ -31,5 +31,8 @@
     <ClInclude Include="HardWare.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OpCode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
