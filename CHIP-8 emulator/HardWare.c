@@ -43,7 +43,7 @@ bool fetch_opcode(Chip8* chip) {
 void loadTestOpcodeProgram(Chip8* chip) {
     uint16_t start_addr = 0x200;
 
-    // רשימת אופקודים לבדיקה
+
     bit8 test_program[] = {
         0x60, 0x01, // 6001: Set V0 to 0x01
         0x61, 0x02, // 6102: Set V1 to 0x02

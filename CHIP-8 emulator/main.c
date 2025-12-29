@@ -10,7 +10,17 @@ int main(int argc, char* argv[]) {
     Chip8 chip8; 
     initChip8(&chip8);
     loadTestOpcodeProgram(&chip8);
-    movePC(chip8.opcode, &chip8);
+    for (int steps = 1; steps <= 9; steps++)
+    {
+        printf("address : 0x%03X , opcode 0x%04X \n", chip8.PC, chip8.opcode);
+        fetch_opcode(&chip8);
+        bool a = false;
+        bool b = false;
+        a = cond(chip8.opcode, &chip8);
+        if (!a) { b = movePC(chip8.opcode, &chip8); }
+        if (!b) { mathAndAssign(chip8.opcode, &chip8); }
+    }
+
     
     /*
     // Initialize SDL
