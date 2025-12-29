@@ -1,8 +1,9 @@
 #pragma once
 //config
+#include <stdint.h>
 
-typedef unsigned char  bit8;
-typedef unsigned short bit16; 
+typedef uint8_t  bit8;
+typedef uint16_t bit16;
 
 bit16 const MAX_ADDRESS = 0xFFF;
 bit16 const MIN_ADDRESS = 0x000;
