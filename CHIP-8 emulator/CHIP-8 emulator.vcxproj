@@ -141,7 +141,9 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HardWare.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="OpCode.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHIP-8.txt" />

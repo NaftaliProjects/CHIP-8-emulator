@@ -1,29 +1,16 @@
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include "HardWare.h"
+#include "OpCode.h"
 
 
-bool fetch_opcode(Chip8* chip) {
-    if (chip->PC >= MIN_OTHER_RESERVED_ADDRESS) return false;
-
-    chip->opcode = (chip->RAM[chip->PC] << 8) | chip->RAM[chip->PC + 1];
-    chip->PC += 2;
-
-    return true;
-}
 
 int main(int argc, char* argv[]) {
 
     Chip8 chip8; 
-    chip8.PC = 0x000;
-    for (bit16 i = 0x000; i <= 40; i++) {
-        chip8.RAM[i] = 1;
-    }
-
-    for (bit16 i = 0x000; i <= 20; i++) {
-        fetch_opcode(&chip8);
-        printf("opcode is: %d\n", chip8.opcode);
-    }
+    initChip8(&chip8);
+    loadTestOpcodeProgram(&chip8);
+    movePC(chip8.opcode, &chip8);
     
     /*
     // Initialize SDL
