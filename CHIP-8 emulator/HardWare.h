@@ -1,21 +1,21 @@
 #pragma once
-//config
 #include <stdint.h>
+#include <stdbool.h> // נחוץ עבור bool
 
 typedef uint8_t  bit8;
 typedef uint16_t bit16;
 
-bit16 const MAX_ADDRESS = 0xFFF;
-bit16 const MIN_ADDRESS = 0x000;
+#define MAX_ADDRESS 0xFFF
+#define MIN_ADDRESS 0x000
 
-bit16 const MAX_RESEVED_FOR_DISPLAY_ADDRESS = 0xFFF;
-bit16 const MIN_RESREVED_FOR_DISPLAY_ADDRESS = 0xF00;
+#define MAX_RESEVED_FOR_DISPLAY_ADDRESS 0xFFF
+#define MIN_RESREVED_FOR_DISPLAY_ADDRESS 0xF00
 
-bit16 const MAX_OTHER_RESERVED_ADDRESS = 0xEFF;
-bit16 const MIN_OTHER_RESERVED_ADDRESS = 0xEA0;
+#define MAX_OTHER_RESERVED_ADDRESS 0xEFF
+#define MIN_OTHER_RESERVED_ADDRESS 0xEA0
 
-bit16 const MAX_INTERPRETER_ADDRESS = 0x1FF;
-bit16 const MIN_INTERPRETER_ADDRESS = 0x000;
+#define MAX_INTERPRETER_ADDRESS 0x1FF
+#define MIN_INTERPRETER_ADDRESS 0x000
 
 
 typedef struct {
@@ -37,7 +37,8 @@ typedef struct {
 } Chip8;
 
 
-
+void initChip8(Chip8* chip);
 bool fetch_opcode(Chip8* chip);
+void loadTestOpcodeProgram(Chip8* chip);
 
 
