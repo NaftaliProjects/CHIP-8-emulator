@@ -18,18 +18,24 @@ bit16 const MIN_INTERPRETER_ADDRESS = 0x000;
 
 
 typedef struct {
-    bit8  V[16];     // V0-VF registers
-    bit16 PC;        // Program Counter
-    bit16 I;         // Index Register
-    bit8  RAM[4096]; // Memory
+    bit8  V[16];        //  V0-VF
+    bit16 PC;           // Program Counter 
+    bit16 I;            // Index Register 
 
-    // Some systems also have timers
+    // המחסנית (Stack)
+    bit16 stack[16];    
+    bit8  SP;           // Stack Pointer 
+
+    bit8  RAM[4096];   
+
     bit8  delay_timer;
     bit8  sound_timer;
+
+    bit16 opcode;      
 } Chip8;
 
 
 
-
+bool fetch_opcode(Chip8* chip);
 
 

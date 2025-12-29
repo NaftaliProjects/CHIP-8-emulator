@@ -3,15 +3,28 @@
 #include "HardWare.h"
 
 
+bool fetch_opcode(Chip8* chip) {
+    if (chip->PC >= MIN_OTHER_RESERVED_ADDRESS) return false;
 
+    chip->opcode = (chip->RAM[chip->PC] << 8) | chip->RAM[chip->PC + 1];
+    chip->PC += 2;
+
+    return true;
+}
 
 int main(int argc, char* argv[]) {
 
     Chip8 chip8; 
-    chip8.RAM[2] = 2;
-    chip8.V[0] = chip8.RAM[2];
-    printf("V0 holds : %d\n", chip8.V[0]);
+    chip8.PC = 0x000;
+    for (bit16 i = 0x000; i <= 40; i++) {
+        chip8.RAM[i] = 1;
+    }
 
+    for (bit16 i = 0x000; i <= 20; i++) {
+        fetch_opcode(&chip8);
+        printf("opcode is: %d\n", chip8.opcode);
+    }
+    
     /*
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) == false) {
