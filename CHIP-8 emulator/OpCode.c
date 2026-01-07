@@ -146,3 +146,41 @@ bool mathAndAssign(bit16 opcode, Chip8* chip)
         return false;
     }
 }
+
+
+
+bool bitwiseOp(bit16 opcode, Chip8* chip)
+{
+    //no need to process F000 becuase it is always 8
+    bit8 op = (opcode & 0x000F);
+    bit8 x = (opcode & 0x0F00) >> 8;
+    bit8 y = (opcode & 0x00F0) >> 4;
+
+    switch (op) {
+    case 0x1:
+        chip->V[x] |= chip->V[y];
+        printf("Vx = Vx OR Vy\n");
+        return true;
+    case 0x2:
+        chip->V[x] &= chip->V[y];
+        printf("Vx = Vx AND Vy\n");
+        return true;
+    case 0x3:
+        chip->V[x] ^= chip->V[y];
+        printf("Vx = Vx XOR Vy\n");
+        return true;
+    case 0x6: 
+        chip->V[0xF] = (chip->V[x] & 0x1);
+        chip->V[x] >>= 1;
+        return true;
+    case 0xE: 
+        chip->V[0xF] = (chip->V[x] & 0x80) >> 7;
+        chip->V[x] <<= 1;
+        return true;
+
+
+    default:
+        printf("opcode isnt bitwise \n");
+        return false;
+    }
+}
