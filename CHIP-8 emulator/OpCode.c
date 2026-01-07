@@ -149,7 +149,7 @@ bool mathAndAssign(bit16 opcode, Chip8* chip)
 
 
 
-bool bitwiseOp(bit16 opcode, Chip8* chip)
+bool bitWiseOp(bit16 opcode, Chip8* chip)
 {
     //no need to process F000 becuase it is always 8
     bit8 op = (opcode & 0x000F);
@@ -181,6 +181,46 @@ bool bitwiseOp(bit16 opcode, Chip8* chip)
 
     default:
         printf("opcode isnt bitwise \n");
+        return false;
+    }
+}
+
+
+
+bool memoryAndIndexing(bit16 opcode, Chip8* chip)
+{
+    bit8 op = (opcode & 0xF000) >> 12;
+    bit8 nnn = (opcode & 0x0FFF);
+    bit8 x = (opcode & 0x0F00) >> 8;
+    bit8 indexOp = (opcode & 0x00FF);
+
+    switch (op) {
+    case 0xA:
+        chip->I = nnn;
+        return true;
+    case 0xF:
+        switch (indexOp) {
+        case 0x1E:
+            chip->I += chip->V[x];
+            return true;
+        case 0x29:
+            chip->I += sprite_addr[chip->V[x];//Sets I to the memory address of the hex font character in VX.
+            return true;
+        case 0x33:
+            set_BCD(chip->V[x]);
+            return true;
+        case 0x55:
+            reg_dump(chip->V[x], &chip->I);
+            return true;
+        case 0x65:
+            reg_load(chip->V[x], &chip->I);
+            return true;
+        default:
+            return false;
+        }
+
+    default:
+        printf("opcode isnt memoryAndIndexing \n");
         return false;
     }
 }
