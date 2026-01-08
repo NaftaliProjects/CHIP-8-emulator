@@ -198,23 +198,45 @@ bool memoryAndIndexing(bit16 opcode, Chip8* chip)
     case 0xA:
         chip->I = nnn;
         return true;
+
     case 0xF:
         switch (indexOp) {
         case 0x1E:
             chip->I += chip->V[x];
             return true;
+
         case 0x29:
-            chip->I += sprite_addr[chip->V[x];//Sets I to the memory address of the hex font character in VX.
+            chip->I = chip->V[x] * SIZE_OF_FONT_INSTANCE;
             return true;
+
         case 0x33:
-            set_BCD(chip->V[x]);
+            chip->RAM[chip->I] = chip->V[x] / 100;         
+            chip->RAM[chip->I + 1] = (chip->V[x] / 10) % 10;   
+            chip->RAM[chip->I + 2] = chip->V[x] % 10;
             return true;
+
         case 0x55:
-            reg_dump(chip->V[x], &chip->I);
+            if (chip->I + x >= 4096) {
+                printf("Error: Reg Dump out of RAM bounds!\n");
+                return false;
+            }
+            for (int i = 0; i <= x; i++)
+            {
+                chip->RAM[chip->I + i] = chip->V[i];
+            }
             return true;
+
         case 0x65:
-            reg_load(chip->V[x], &chip->I);
+            if (chip->I + x >= 4096) {
+                printf("Error: Reg Load out of RAM bounds!\n");
+                return false;
+            }
+            for (int i = 0; i <= x; i++)
+            {
+                chip->V[i] = chip->RAM[chip->I + i];
+            }
             return true;
+
         default:
             return false;
         }
