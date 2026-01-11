@@ -1,24 +1,31 @@
 #include <SDL3/SDL.h>
-#include <stdio.h>
-#include "HardWare.h"
 #include "OpCode.h"
 
 
 
 int main(int argc, char* argv[]) {
-
-    Chip8 chip8; 
+    Chip8 chip8;
     initChip8(&chip8);
     loadTestOpcodeProgram(&chip8);
-    for (int steps = 1; steps <= 9; steps++)
+
+    FILE* ptr = fopen("C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\15_Puzzle.ch8", "rb");
+    if (ptr == NULL) {
+        printf("Error: Could not open ROM\n");
+        return;
+    }
+
+
+    size_t bytesRead = fread(&chip8.RAM[0x200], 1, (4096 - 0x200), ptr);
+
+    printf("Loaded %zu bytes into RAM starting at 0x200\n", bytesRead);
+    fclose(ptr);
+
+
+   
+    for (int steps = 1; steps <= 100; steps++)
     {
         printf("address : 0x%03X , opcode 0x%04X \n", chip8.PC, chip8.opcode);
-        fetch_opcode(&chip8);
-        bool a = false;
-        bool b = false;
-        a = cond(chip8.opcode, &chip8);
-        if (!a) { b = movePC(chip8.opcode, &chip8); }
-        if (!b) { mathAndAssign(chip8.opcode, &chip8); }
+        fetchAndPrcocessOpCode(&chip8);
     }
 
     
