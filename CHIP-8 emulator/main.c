@@ -22,10 +22,12 @@ int main(int argc, char* argv[]) {
 
 
    
-    for (int steps = 1; steps <= 100; steps++)
-    {
-        printf("address : 0x%03X , opcode 0x%04X \n", chip8.PC, chip8.opcode);
-        fetchAndPrcocessOpCode(&chip8);
+    for (int steps = 1; steps <= 4096; steps++)
+    { 
+        if (fetchAndPrcocessOpCode(&chip8))
+            printf("\nopcode found\n");
+        else
+            printf("opcode 0x%04X  wasnt decoded\n",  chip8.opcode);
     }
 
     

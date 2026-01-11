@@ -155,6 +155,8 @@ bool bitWiseOp(bit16 opcode, Chip8* chip)
     bit8 op = (opcode & 0x000F);
     bit8 x = (opcode & 0x0F00) >> 8;
     bit8 y = (opcode & 0x00F0) >> 4;
+
+    printf("op 0x00F = 0x%04X  d\n", op);
     
 
     switch (op) {
@@ -335,6 +337,7 @@ bool fetchAndPrcocessOpCode(Chip8* chip)
 
     // Extract first nibble correctly (Shift Right >>)
     bit8 startWith = (chip->opcode & 0xF000) >> 12;
+    bit8 endWith = (chip->opcode & 0x000F);
 
     switch (startWith) {
 
@@ -352,8 +355,14 @@ bool fetchAndPrcocessOpCode(Chip8* chip)
 
         case 0x6:
         case 0x7:
-        case 0x8:
             return mathAndAssign(chip->opcode, chip);
+
+        case 0x8:
+            if (endWith == 0x0 || endWith == 0x4 || endWith == 0x5 || endWith == 0x7)
+                return mathAndAssign(chip->opcode, chip);
+
+            else if (endWith == 0x1 || endWith == 0x2 || endWith == 0x3 || endWith == 0x6 || endWith == 0xE)
+                return bitWiseOp(chip->opcode, chip);
 
         case 0xA:
         case 0xF:
