@@ -1,46 +1,50 @@
 #include "OpCode.h"
 #include <stdio.h>
 
-bool movePC(bit16 opcode, Chip8* chip)
+/*
+* movePc - sets the value of PC occurding to the opcode
+* params : (boolean: debugMode , Chip8* chip)
+*/
+bool movePC(bool debugMode,Chip8* chip)
 {
-    if ((opcode & 0xF000) == 0x0000) {
+    bit16 opcode = chip->opcode;
+    bit8 op = (opcode & 0xF000) >> 12;
+    bit16 address = (opcode & 0x0FFF);
+
+    if (op == 0x0) {
         if (opcode == 0x00EE) {
-            // RETURN: 
             chip->PC = chip->stack[--chip->SP];
-            printf("opcode = Return from stack\n");
+            if (debugMode) { printf("opcode = Return from stack\n"); }
             return true;
         }
         if (opcode == 0x00E0) {
-            // CLEAR SCREEN: 
-            printf("opcode = Clear Screen\n");
+            if (debugMode) { printf("opcode = Clear Screen\n"); }
             return true;
         }
         return true;
     }
     
-    bit8 op = (opcode & 0xF000) >> 12;
-    bit16 address = (opcode & 0x0FFF);
-
+    
     switch (op) {
         case 0x1: // Jump 1NNN
             chip->PC = address;
-            printf("opcode = Jump to 0x%03X\n", address);
+            if (debugMode) { printf("opcode = Jump to 0x%03X\n", address); }
             return true;
 
         case 0x2: // Call 2NNN
             chip->stack[chip->SP] = chip->PC;
             chip->SP++;
             chip->PC = address;
-            printf("opcode = Call 0x%03X\n", address);
+            if (debugMode) { printf("opcode = Call 0x%03X\n", address); }
             return true;
 
         case 0xB: // Jump + V0
             chip->PC = address + chip->V[0];
-            printf("opcode : Jump + V0 =  0x%03X \n",chip->PC);
+            if (debugMode) { printf("opcode : Jump + V0 =  0x%03X \n", chip->PC); }
             return true;
 
         default:
-            printf("opcode isnt a move\n");
+            if (debugMode) { printf("opcode isnt a move\n"); }
             return false;
         }
    

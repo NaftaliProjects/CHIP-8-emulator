@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
    
     for (int steps = 1; steps <= 4096; steps++)
     { 
-        if (fetchAndPrcocessOpCode(&chip8))
+        if (fetchAndPrcocessOpCode(true,&chip8))
             printf("\nopcode found\n");
         else
             printf("opcode 0x%04X  wasnt decoded\n",  chip8.opcode);
