@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h> 
+#include <SDL3/SDL.h>
 
 typedef uint8_t  bit8;
 typedef uint16_t bit16;
@@ -57,6 +58,6 @@ bool fetch_opcode(Chip8* chip);
 void loadFontToChip(Chip8* chip);
 
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height);
-
+void handleKeyPress(Chip8* chip, SDL_Event* e);
 
 #endif // HARWARE_H
