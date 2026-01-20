@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h> // נחוץ עבור bool
+#include <stdbool.h> 
 
 typedef uint8_t  bit8;
 typedef uint16_t bit16;
+
+#define BYTE_SIZE 8
 
 #define MAX_ADDRESS 0xFFF
 #define MIN_ADDRESS 0x000
@@ -24,6 +26,8 @@ typedef uint16_t bit16;
 #define SIZE_OF_FONT_INSTANCE 5
 
 
+#define SCREEN_WIDTH 64
+#define SCREEN_HEIGHT 32
 
 
 typedef struct {
@@ -38,8 +42,11 @@ typedef struct {
 
     bit8  RAM[4096];   
 
+    bit8 screen[SCREEN_WIDTH * SCREEN_HEIGHT];
     bit8  delay_timer;
     bit8  sound_timer;
+
+    bit8 keys[16];
 
     bit16 opcode;      
 } Chip8;
@@ -47,7 +54,9 @@ typedef struct {
 
 void initChip8(Chip8* chip);
 bool fetch_opcode(Chip8* chip);
-void loadTestOpcodeProgram(Chip8* chip);
+void loadFontToChip(Chip8* chip);
+
+void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height);
 
 
 #endif // HARWARE_H

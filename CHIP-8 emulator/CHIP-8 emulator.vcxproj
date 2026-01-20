@@ -82,6 +82,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Temp\Lab\VisualStudio\C\Libs\SDL src code\SDL-release-3.4.0\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -96,6 +97,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Temp\Lab\VisualStudio\C\Libs\SDL src code\SDL-release-3.4.0\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -108,7 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Temp\Lab\VisualStudio\C\Libs\SDL3-devel-3.3.6-VC\SDL3-3.3.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Temp\Lab\VisualStudio\C\Libs\SDL src code\SDL-release-3.4.0\include;C:\Temp\Lab\VisualStudio\C\Libs\SDL3-devel-3.3.6-VC\SDL3-3.3.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,7 +130,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Temp\Lab\VisualStudio\C\Libs\SDL3-devel-3.3.6-VC\SDL3-3.3.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Temp\Lab\VisualStudio\C\Libs\SDL src code\SDL-release-3.4.0\include;C:\Temp\Lab\VisualStudio\C\Libs\SDL3-devel-3.3.6-VC\SDL3-3.3.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +146,7 @@
     <ClCompile Include="HardWare.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="OpCode.c" />
+    <ClCompile Include="render.c" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CHIP-8.txt" />
@@ -151,6 +154,12 @@
   <ItemGroup>
     <ClInclude Include="HardWare.h" />
     <ClInclude Include="OpCode.h" />
+    <ClInclude Include="Render.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Libs\SDL src code\SDL-release-3.4.0\VisualC\SDL\SDL.vcxproj">
+      <Project>{81ce8daf-ebb2-4761-8e45-b71abcca8c68}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
