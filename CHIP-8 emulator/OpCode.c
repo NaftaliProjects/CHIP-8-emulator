@@ -308,7 +308,7 @@ bool IOandP(bool debugMode, Chip8* chip)
         return true;
 
     case 0xD:
-        drawSprite(chip, chip->V[x], chip->V[y], nnn);
+        drawSprite(chip, chip->V[x], chip->V[y], n);
         if (debugMode) { printf("opcode : draw sprite in (Vx,Vy) with height N \n"); }
         return true;
          
@@ -354,15 +354,15 @@ bool IOandP(bool debugMode, Chip8* chip)
         }
 
             case 0x07:
-                //chip->V[x] = getDelay(&chip->delayTimer)
+                chip->V[x] = chip->delay_timer;
                 return true;
 
             case 0x15:
-                //chip->delayTimer = chip->V[x];
+                chip->delay_timer = chip->V[x];
                 return true;
 
             case 0x18:
-                //chip->sound_timer = chip->V[x];
+                chip->sound_timer = chip->V[x];
                 return true;
 
             default:

@@ -25,6 +25,7 @@ void initChip8(Chip8* chip) {
     }
 
     memset(chip->screen, 0, sizeof(chip->screen));
+    memset(chip->keys, 0, sizeof(chip->keys));
 
     chip->delay_timer = 0;
     chip->sound_timer = 0;
