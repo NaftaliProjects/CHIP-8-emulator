@@ -201,13 +201,13 @@ bool bitWiseOp(bool debugMode, Chip8* chip)
         if (debugMode) { printf("Vx = Vx XOR Vy\n"); }
         return true;
     case 0x6: 
-        chip->V[0xF] = (chip->V[x] & 0x1);
-        chip->V[x] = chip->V[y] >> 1;
+        chip->V[0xF] = chip->V[x] & 0x1;
+        chip->V[x] >>= 1;
         if (debugMode) { printf("VF = VX AND  0x1\n"); }
         return true;
     case 0xE: 
         chip->V[0xF] = (chip->V[x] & 0x80) >> 7;
-        chip->V[x] = chip->V[y] << 1;
+        chip->V[x] <<= 1;
         if (debugMode) { printf("VF = Vx AND 0x80\n"); }
         return true;
 
@@ -363,6 +363,7 @@ bool IOandP(bool debugMode, Chip8* chip)
 
             case 0x07:
                 chip->V[x] = chip->delay_timer;
+                printf("FX07: delay_timer = %d\n", chip->delay_timer);
                 return true;
 
             case 0x15:
@@ -407,10 +408,13 @@ bool fetchAndPrcocessOpCode(bool debugMode,Chip8* chip)
     switch (startWith) {
 
         case 0x0:
-            if (endWith == 0x0)
+            if (chip->opcode == 0x00E0)
                 return IOandP(debugMode, chip);
-            else 
+            else if (chip->opcode == 0x00EE)
                 return movePC(debugMode, chip);
+            else
+                return false;
+
         case 0x1:
         case 0x2:
         case 0xB:
@@ -434,8 +438,16 @@ bool fetchAndPrcocessOpCode(bool debugMode,Chip8* chip)
                 return bitWiseOp(debugMode, chip);
 
         case 0xA:
-        case 0xF:
             return memoryAndIndexing(debugMode, chip);
+
+        case 0xF:
+            if (endWith == 0xE | endWith == 0x9 | endWith == 0x3 | endWith == 0x5)
+                return memoryAndIndexing(debugMode, chip);
+            else if (endWith == 0xA | endWith == 0x7 | endWith == 0x5 | endWith == 0x8)
+                return IOandP(debugMode, chip);
+            else
+                return false;
+            
 
         case 0xD:
         case 0xE:
