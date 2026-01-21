@@ -363,7 +363,6 @@ bool IOandP(bool debugMode, Chip8* chip)
 
             case 0x07:
                 chip->V[x] = chip->delay_timer;
-                printf("FX07: delay_timer = %d\n", chip->delay_timer);
                 return true;
 
             case 0x15:
@@ -441,12 +440,22 @@ bool fetchAndPrcocessOpCode(bool debugMode,Chip8* chip)
             return memoryAndIndexing(debugMode, chip);
 
         case 0xF:
-            if (endWith == 0xE | endWith == 0x9 | endWith == 0x3 | endWith == 0x5)
-                return memoryAndIndexing(debugMode, chip);
-            else if (endWith == 0xA | endWith == 0x7 | endWith == 0x5 | endWith == 0x8)
+        {
+            bit8 opEnd = chip->opcode & 0x00FF;
+
+            // Timers / Keyboard / Sound
+            if (opEnd == 0x07 || opEnd == 0x0A || opEnd == 0x15 || opEnd == 0x18)
                 return IOandP(debugMode, chip);
-            else
+
+            // Memory / Index instructions
+            else if (opEnd == 0x1E || opEnd == 0x29 || opEnd == 0x33 || opEnd == 0x55 || opEnd == 0x65)
+                return memoryAndIndexing(debugMode, chip);
+
+            else {
+                if (debugMode) { printf("Unknown F opcode: %04X\n", chip->opcode); }
                 return false;
+            }
+        }
             
 
         case 0xD:
