@@ -30,7 +30,7 @@ typedef uint16_t bit16;
 #define SCREEN_WIDTH 64
 #define SCREEN_HEIGHT 32
 
-
+#pragma pack(push, 1)
 typedef struct {
     bit8  V[16];        //  V0-VF
     bit16 PC;           // Program Counter 
@@ -43,7 +43,7 @@ typedef struct {
 
     bit8  RAM[4096];   
 
-    bit8 screen[SCREEN_WIDTH * SCREEN_HEIGHT];
+    bit8  screen[SCREEN_WIDTH * SCREEN_HEIGHT];
     bit8  delay_timer;
     bit8  sound_timer;
 
@@ -51,13 +51,12 @@ typedef struct {
 
     bit16 opcode;      
 } Chip8;
-
+#pragma pack(pop)
 
 void initChip8(Chip8* chip);
-bool fetch_opcode(Chip8* chip);
 void loadFontToChip(Chip8* chip);
 
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height);
-void handleKeyPress(Chip8* chip, SDL_Event* e);
+void handleKeyPress(bool debugMode , Chip8* chip, SDL_Event* e);
 
 #endif // HARWARE_H

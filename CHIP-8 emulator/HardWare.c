@@ -6,46 +6,10 @@ uint8_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT] = { 0 };
 
 
 void initChip8(Chip8* chip) {
+    memset(chip, 0, sizeof(Chip8));
     chip->PC = 0x200;
-
-    chip->I = 0;
-    chip->SP = 0;
-    chip->opcode = 0;
-
-    for (int i = 0; i < 4096; i++) {
-        chip->RAM[i] = 0;
-    }
-
-    for (int i = 0; i < 16; i++) {
-        chip->V[i] = 0;
-    }
-
-    for (int i = 0; i < 16; i++) {
-        chip->stack[i] = 0;
-    }
-
-    memset(chip->screen, 0, sizeof(chip->screen));
-    memset(chip->keys, 0, sizeof(chip->keys));
-
-    chip->delay_timer = 0;
-    chip->sound_timer = 0;
-
 }
 
-
-bool fetch_opcode(Chip8* chip) {
-    if (chip->PC >= MIN_OTHER_RESERVED_ADDRESS - 1) {
-        printf("Error: Program Counter reached reserved memory or out of bounds at 0x%03X\n", chip->PC);
-        return false;
-    }
-
-    chip->opcode = (chip->RAM[chip->PC] << 8) | chip->RAM[chip->PC + 1];
-    
-
-    chip->PC += 2;
-
-    return true;
-}
 
 
 
@@ -79,12 +43,10 @@ void loadFontToChip(Chip8* chip)
 
 
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height) {
-    printf("DEBUG: drawSprite called at (%d, %d) with height %d\n", x, y, height);
     bit16 spriteAddr = chip->I;
 
     for (int i = 0; i < height; i++) {
         bit8 spriteRow = chip->RAM[spriteAddr + i];
-        printf("DEBUG: Drawing Sprite Row %d. Address: 0x%03X, Value: 0x%02X\n", i, spriteAddr + i, spriteRow);
 
         chip->V[0xF] = 0;
 
@@ -108,10 +70,10 @@ void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height) {
 }
 
 
-void handleKeyPress(Chip8* chip, SDL_Event* e)
+void handleKeyPress(bool debugMode, Chip8* chip, SDL_Event* e)
 {
     if (e->type == SDL_EVENT_KEY_DOWN) {
-        printf("-------------- key pressed %02X---------------", e->key.key);
+        if (debugMode) { printf("-------------- key pressed %02X---------------", e->key.key); }
         switch (e->key.key) {
         case SDLK_1: chip->keys[0x1] = 1; break;
         case SDLK_2: chip->keys[0x2] = 1; break;
