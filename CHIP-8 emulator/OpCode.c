@@ -17,13 +17,7 @@ bool movePC(bool debugMode,Chip8* chip)
             if (debugMode) { printf("opcode = Return from stack\n"); }
             return true;
         }
-        /*
-        if (opcode == 0x00E0) {
-            memset(chip->screen, 0, sizeof(chip->screen));
-            if (debugMode) { printf("opcode = Clear Screen\n"); }
-            return true;
-        }
-        */
+
         return true;
     }
     
@@ -116,9 +110,7 @@ bool cond(bool debugMode, Chip8* chip)
 * mathAndAssign - Assign VX with math operations
 * params : (boolean: debugMode , Chip8* chip)
 */
-
-bool mathAndAssign( bool debugMode, Chip8* chip)
-{
+bool mathAndAssign(bool debugMode, Chip8* chip) {
     bit16 opcode = chip->opcode;
 
     bit8 op = (opcode & 0xF000) >> 12;
@@ -127,39 +119,55 @@ bool mathAndAssign( bool debugMode, Chip8* chip)
     bit8 nn = (opcode & 0x00FF);
     bit8 opR = (opcode & 0x000F);
 
-
     switch (op) {
-    case 0x6:
+    case 0x6: // 6XNN: VX = NN
         chip->V[x] = nn;
-        if (debugMode) { printf("opcode : Vx = NN\n"); }
+        if (debugMode) printf("opcode : V[%X] = %02X\n", x, nn);
         return true;
-    case 0x7:
+
+    case 0x7: // 7XNN: VX += NN (Carry flag NOT affected)
         chip->V[x] += nn;
-        if (debugMode) { printf("opcode : Vx += NN\n"); }
+        if (debugMode) printf("opcode : V[%X] += %02X\n", x, nn);
         return true;
+
     case 0x8:
         switch (opR) {
-        case (0x0):
+        case 0x0: // 8XY0: VX = VY
             chip->V[x] = chip->V[y];
-            if (debugMode) { printf("opcode : Vx = Vy\n"); }
+            if (debugMode) printf("opcode : V[%X] = V[%X]\n", x, y);
             return true;
-        case (0x4):
-            chip->V[x] += chip->V[y];
-            if (debugMode) { printf("opcode = Vx += Vy\n"); }
-            return true;
-        case (0x5):
-            chip->V[x] -= chip->V[y];
-            if (debugMode) { printf("opcode = Vx -= Vy\n"); }
-            return true;
-        case (0x7):
-            chip->V[x] = chip->V[y] - chip->V[x];
-            if (debugMode) { printf("opcode = Vx = Vy - Vx\n"); }
+
+        case 0x4: // 8XY4: VX += VY (Affects Carry Flag)
+        {
+            bit16 sum = (bit16)chip->V[x] + (bit16)chip->V[y];
+            chip->V[0xF] = (sum > 255) ? 1 : 0; // Carry
+            chip->V[x] = (bit8)(sum & 0xFF);
+            if (debugMode) printf("opcode : V[%X] += V[%X] (VF=%d)\n", x, y, chip->V[0xF]);
             return true;
         }
 
-    
+        case 0x5: // 8XY5: VX -= VY (Affects Borrow Flag)
+        {
+            bit8 vX_old = chip->V[x];
+            chip->V[0xF] = (chip->V[x] >= chip->V[y]) ? 1 : 0; // NOT Borrow
+            chip->V[x] -= chip->V[y];
+            if (debugMode) printf("opcode : V[%X] -= V[%X] (VF=%d)\n", x, y, chip->V[0xF]);
+            return true;
+        }
+
+        case 0x7: // 8XY7: VX = VY - VX (Affects Borrow Flag)
+        {
+            chip->V[0xF] = (chip->V[y] >= chip->V[x]) ? 1 : 0; // NOT Borrow
+            chip->V[x] = chip->V[y] - chip->V[x];
+            if (debugMode) printf("opcode : V[%X] = V[%X] - V[%X] (VF=%d)\n", x, y, x, chip->V[0xF]);
+            return true;
+        }
+
+        default:
+            return false;
+        }
+
     default:
-        if (debugMode) { printf("opcode isnt math or assing\n"); }
         return false;
     }
 }
@@ -194,12 +202,12 @@ bool bitWiseOp(bool debugMode, Chip8* chip)
         return true;
     case 0x6: 
         chip->V[0xF] = (chip->V[x] & 0x1);
-        chip->V[x] >>= 1;
+        chip->V[x] = chip->V[y] >> 1;
         if (debugMode) { printf("VF = VX AND  0x1\n"); }
         return true;
     case 0xE: 
         chip->V[0xF] = (chip->V[x] & 0x80) >> 7;
-        chip->V[x] <<= 1;
+        chip->V[x] = chip->V[y] << 1;
         if (debugMode) { printf("VF = Vx AND 0x80\n"); }
         return true;
 
@@ -370,7 +378,7 @@ bool IOandP(bool debugMode, Chip8* chip)
         }
        
     case 0xC:
-        //chip->V[x] = rand() & nn;
+        chip->V[x] = rand() & nn;
         return true;
 
     default:
@@ -390,7 +398,7 @@ bool fetchAndPrcocessOpCode(bool debugMode,Chip8* chip)
     chip->opcode = (chip->RAM[chip->PC] << 8) | chip->RAM[chip->PC + 1];
     chip->PC += 2;
 
-    printf("\nprocessing opcode : 0x%04X \n", chip->opcode);
+    if (debugMode) { printf("\nprocessing opcode : 0x%04X \n", chip->opcode); }
 
     // Extract first nibble correctly (Shift Right >>)
     bit8 startWith = (chip->opcode & 0xF000) >> 12;
@@ -412,27 +420,27 @@ bool fetchAndPrcocessOpCode(bool debugMode,Chip8* chip)
         case 0x4:
         case 0x5:
         case 0x9:
-            return cond(chip->opcode, chip);
+            return cond(debugMode, chip);
 
         case 0x6:
         case 0x7:
-            return mathAndAssign(chip->opcode, chip);
+            return mathAndAssign(debugMode, chip);
 
         case 0x8:
             if (endWith == 0x0 || endWith == 0x4 || endWith == 0x5 || endWith == 0x7)
-                return mathAndAssign(chip->opcode, chip);
+                return mathAndAssign(debugMode, chip);
 
             else if (endWith == 0x1 || endWith == 0x2 || endWith == 0x3 || endWith == 0x6 || endWith == 0xE)
-                return bitWiseOp(chip->opcode, chip);
+                return bitWiseOp(debugMode, chip);
 
         case 0xA:
         case 0xF:
-            return memoryAndIndexing(chip->opcode, chip);
+            return memoryAndIndexing(debugMode, chip);
 
         case 0xD:
         case 0xE:
         case 0xC:
-            return IOandP(chip->opcode, chip);
+            return IOandP(debugMode, chip);
 
         default: 
             printf("Unknown opcode or Unknown error");
