@@ -3,7 +3,8 @@
 #include <SDL3/SDL.h>
 #include "HardWare.h"
 
+SDL_Renderer* initRenderer();
 void renderPixels(SDL_Renderer *renderer, Chip8 *chip);
-//void setPixelWhite(int x, int y);
+
 
 #endif // RENDER_H

@@ -5,8 +5,8 @@
 #include <errno.h> 
 
 
-
-//  "C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\15_Puzzle.ch8"  IBM_logo Airplane    Bowling [Gooitzen van der Wal]    Cave    Maze (alt) [David Winter, 199x]
+// Particle Demo [zeroZshadow, 2008]      Stars [Sergey Naydenov, 2010]       Hires Worm V4 [RB-Revival Studios, 2007]
+//  "C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\15_Puzzle.ch8"  IBM_logo     Airplane    Bowling [Gooitzen van der Wal]    Cave    Maze (alt) [David Winter, 199x]
 
 int main(int argc, char* argv[]) {
     
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     loadFontToChip(debugMode ,&chip8);
     
     //load ROM
-    FILE* ptr = fopen("C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\Airplane.ch8", "rb");
+    FILE* ptr = fopen("C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\15_Puzzle.ch8", "rb");
     if (!loadRom(debugMode, &chip8, ptr)) { return errno; }
 
     SDL_Renderer* renderer = initRenderer();
@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
             handleKeyPress(debugMode , &chip8, &e);
         }
 
-        for (int i = 0; i <10; i++) {
+        for (int i = 0; i <3; i++) {
             fetchAndPrcocessOpCode(debugMode, &chip8);
         }
 
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
         }
 
         renderPixels(renderer, &chip8);
-        SDL_Delay(60);   
+        SDL_Delay(1);   
 
 
     }

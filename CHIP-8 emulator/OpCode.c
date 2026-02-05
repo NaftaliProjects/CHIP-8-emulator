@@ -1,6 +1,13 @@
 #include "OpCode.h"
 #include <stdio.h>
 #include <string.h>
+
+/*
+    CHIP-8 OpCodes Logic - SUPER-CHIP specification from 1991
+*/
+
+
+
 /*
 * movePc - sets the value of PC occurding to the opcode
 * params : (boolean: debugMode , Chip8* chip)
@@ -11,31 +18,32 @@ bool movePC(bool debugMode,Chip8* chip)
     bit8 op = (opcode & 0xF000) >> 12;
     bit16 address = (opcode & 0x0FFF);
 
-    if (op == 0x0) {
-        if (opcode == 0x00EE) {
-            chip->PC = chip->stack[--chip->SP];
-            if (debugMode) { printf("opcode = Return from stack\n"); }
-            return true;
-        }
 
+    //0x00EE - Returns from a subroutine
+    if (opcode == 0x00EE) {
+        chip->PC = chip->stack[--chip->SP];
+        if (debugMode) { printf("opcode = Return from stack\n"); }
         return true;
     }
     
-    
     switch (op) {
-        case 0x1: // Jump 1NNN
+
+        // 0x1NNN - Jumps to address NNN
+        case 0x1: 
             chip->PC = address;
             if (debugMode) { printf("opcode = Jump to 0x%03X\n", address); }
             return true;
 
-        case 0x2: // Call 2NNN
+        //0x2NNN - Calls subroutine at NNN
+        case 0x2:  
             chip->stack[chip->SP] = chip->PC;
             chip->SP++;
             chip->PC = address;
             if (debugMode) { printf("opcode = Call 0x%03X\n", address); }
             return true;
-
-        case 0xB: // Jump + V0
+        
+        //0xBNN - Jumps to the address NNN plus V0
+        case 0xB: 
             chip->PC = address + chip->V[0];
             if (debugMode) { printf("opcode : Jump + V0 =  0x%03X \n", chip->PC); }
             return true;
@@ -64,44 +72,34 @@ bool cond(bool debugMode, Chip8* chip)
     bit8 x = (opcode & 0x0F00) >> 8;
     bit8 y = (opcode & 0x00F0) >> 4;
     switch (op) {
-    case 0x3: 
-        if (chip->V[x] == nn)
-        {
-            chip->PC+=2;
-        }
-        if (debugMode) { printf("opcode = if VX == NN\n"); }
-        return true;
-        break;
 
-    case 0x4: 
-        if (chip->V[x] != nn)
-        {
-            chip->PC += 2;
-        }
-        if (debugMode) { printf("opcode = if VX != NN\n"); }
-        return true;
-        break;
+        //0x3XNN - Skips the next instruction if VX equals NN (usually the next instruction is a jump to skip a code block)
+        case 0x3: 
+            if (chip->V[x] == nn) { chip->PC += 2; }
+            if (debugMode) { printf("opcode = if VX == NN\n"); }
+            return true;
 
-    case 0x5: 
-        if (chip->V[x] == chip->V[y])
-        {
-            chip->PC += 2;
-        }
-        if (debugMode) { printf("opcode = if VX == VY\n"); }
-        return true;
-        break;
+        //0x4XNN - Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block)
+        case 0x4: 
+            if (chip->V[x] != nn) { chip->PC += 2; }
+            if (debugMode) { printf("opcode = if VX != NN\n"); }
+            return true;
 
-    case 0x9: 
-        if (chip->V[x] != chip->V[y])
-        {
-            chip->PC += 2;
-        }
-        if (debugMode) { printf("opcode = if VX != VY\n"); }
-        return true;
-        break;
-    default:
-        if (debugMode) { printf("opcode isnt a cond\n"); }
-        return false;
+        //0x5XY0 -  Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
+        case 0x5: 
+            if (chip->V[x] == chip->V[y]) { chip->PC += 2; }
+            if (debugMode) { printf("opcode = if VX == VY\n"); }
+            return true;
+
+        //0x9XY0 - Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block)
+        case 0x9: 
+            if (chip->V[x] != chip->V[y]) { chip->PC += 2; }
+            if (debugMode) { printf("opcode = if VX != VY\n"); }
+            return true;
+
+        default:
+            if (debugMode) { printf("opcode isnt a cond\n"); }
+            return false;
     }
 }
 
@@ -120,24 +118,30 @@ bool mathAndAssign(bool debugMode, Chip8* chip) {
     bit8 opR = (opcode & 0x000F);
 
     switch (op) {
-    case 0x6: // 6XNN: VX = NN
+
+    //0x6XNN - Sets VX to NN
+    case 0x6: 
         chip->V[x] = nn;
         if (debugMode) printf("opcode : V[%X] = %02X\n", x, nn);
         return true;
-
-    case 0x7: // 7XNN: VX += NN (Carry flag NOT affected)
+    
+    //0x7XNN - Adds NN to VX (carry flag is not changed).
+    case 0x7: 
         chip->V[x] += nn;
         if (debugMode) printf("opcode : V[%X] += %02X\n", x, nn);
         return true;
 
     case 0x8:
         switch (opR) {
-        case 0x0: // 8XY0: VX = VY
+
+        // 8XY0: - Sets VX to the value of VY
+        case 0x0: 
             chip->V[x] = chip->V[y];
             if (debugMode) printf("opcode : V[%X] = V[%X]\n", x, y);
             return true;
 
-        case 0x4: // 8XY4: VX += VY (Affects Carry Flag)
+        //0x8XY4 - Adds VY to VX. VF is set to 1 when there's an overflow, and to 0 when there is not
+        case 0x4: 
         {
             bit16 sum = (bit16)chip->V[x] + (bit16)chip->V[y];
             chip->V[0xF] = (sum > 255) ? 1 : 0; // Carry
@@ -146,16 +150,18 @@ bool mathAndAssign(bool debugMode, Chip8* chip) {
             return true;
         }
 
-        case 0x5: // 8XY5: VX -= VY (Affects Borrow Flag)
+        //0x8XY5 - VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not)
+        case 0x5: 
         {
             bit8 vX_old = chip->V[x];
-            chip->V[0xF] = (chip->V[x] >= chip->V[y]) ? 1 : 0; // NOT Borrow
+            chip->V[0xF] = (chip->V[x] >= chip->V[y]) ? 1 : 0; // NOT Borrow 
             chip->V[x] -= chip->V[y];
             if (debugMode) printf("opcode : V[%X] -= V[%X] (VF=%d)\n", x, y, chip->V[0xF]);
             return true;
         }
 
-        case 0x7: // 8XY7: VX = VY - VX (Affects Borrow Flag)
+        //0x8XY7 - Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not. (i.e. VF set to 1 if VY >= VX).
+        case 0x7:
         {
             chip->V[0xF] = (chip->V[y] >= chip->V[x]) ? 1 : 0; // NOT Borrow
             chip->V[x] = chip->V[y] - chip->V[x];
@@ -188,27 +194,42 @@ bool bitWiseOp(bool debugMode, Chip8* chip)
     
 
     switch (op) {
+
+    //0x8XY1 - Sets VX to VX or VY. (bitwise OR operation)
     case 0x1:
         chip->V[x] |= chip->V[y];
         if (debugMode) { printf("Vx = Vx OR Vy\n"); }
         return true;
+
+    //8XY2 - Sets VX to VX and VY. (bitwise AND operation)
     case 0x2:
         chip->V[x] &= chip->V[y];
         if (debugMode) { printf("Vx = Vx AND Vy\n"); }
         return true;
+
+    // --- The logical opcodes 8XY3, 8XY6, 8XY7 and 8XYE were not documented in the original CHIP-8 specification, as all the 8000 opcodes were dispatched to instructions in the 1802's ALU, and not located in the interpreter itself; these four additional opcodes were therefore presumably unintentional functionality.---
+    //0x8XY3 - Sets VX to (VX xor VY)
     case 0x3:
         chip->V[x] ^= chip->V[y];
         if (debugMode) { printf("Vx = Vx XOR Vy\n"); }
         return true;
+    
+    //0x8XY6 - Shifts VX to the right by 1, then stores the least significant bit of VX prior to the shift into VF
     case 0x6: 
-        chip->V[0xF] = chip->V[x] & 0x1;
+        //CHIP-48 and SCHIP implementation
+        chip->V[0xF] = chip->V[x] & 0x1;    
         chip->V[x] >>= 1;
+        //original implemetaion such as COSMAC VIP :  chip->V[0xF] = chip->V[y] & 0x1; chip->V[x] = chip->V[y] >> 1;
         if (debugMode) { printf("VF = VX AND  0x1\n"); }
         return true;
+
+    //0x8XYE - Shifts VX to the left by 1, then sets VF to 1 if the most significant bit of VX prior to that shift was set, or to 0 if it was unset
     case 0xE: 
-        chip->V[0xF] = (chip->V[x] & 0x80) >> 7;
+        //CHIP-48 and SCHIP implementation
+        chip->V[0xF] = (chip->V[x] & 0x80) >> 7; //sets VF to 1 or 0 dependes on the MSB of VX
         chip->V[x] <<= 1;
-        if (debugMode) { printf("VF = Vx AND 0x80\n"); }
+        //original implemetaion such as COSMAC VIP : chip->V[0xF] = (chip->V[y] & 0x80) >> 7; chip->V[x] = chip->V[y] <<  1;
+        if (debugMode) { printf("VF = MSB of VX, VX <<= 1\n"); }
         return true;
 
 
@@ -231,24 +252,31 @@ bool memoryAndIndexing(bool debugMode, Chip8* chip)
     bit16 nnn = (opcode & 0x0FFF);
     bit8 x = (opcode & 0x0F00) >> 8;
     bit8 indexOp = (opcode & 0x00FF);
-
+    bit8 lowestNibble;
     switch (op) {
+
+    //ANNN - Sets I to the address NNN
     case 0xA:
         chip->I = nnn;
         if (debugMode) { printf("opcode : I = NNN\n"); }
         return true;
-
+    
     case 0xF:
         switch (indexOp) {
+        //0xFX1E - Adds VX to I. VF is not affected.
         case 0x1E:
             chip->I += chip->V[x];
             if (debugMode) { printf("opcode : I += VX\n"); }
             return true;
 
+        //0xFX29 - Sets I to the location of the sprite for the character in VX(only consider the lowest nibble). Characters 0-F (in hexadecimal) are represented by a 4x5 font
         case 0x29:
-            chip->I = FONT_ADDRESS_START + (chip->V[x] * SIZE_OF_FONT_INSTANCE); 
+            lowestNibble = chip->V[x] & 0x0F;
+            chip->I = FONT_ADDRESS_START + (lowestNibble * SIZE_OF_FONT_INSTANCE);
+            if (debugMode) { printf("opcode : I = FONT_ADDRESS[VX]  \n"); }
             return true;
 
+        //0xFX33 - Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
         case 0x33:
             chip->RAM[chip->I] = chip->V[x] / 100;         
             chip->RAM[chip->I + 1] = (chip->V[x] / 10) % 10;   
@@ -256,6 +284,7 @@ bool memoryAndIndexing(bool debugMode, Chip8* chip)
             if (debugMode) { printf("opcode : write to Ram in address I to I+2 the val of VX \n"); }
             return true;
 
+        //0xFX55 - Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified
         case 0x55:
             if (chip->I + x >= 4096) {
                 if (debugMode) { printf("Error: Reg Load out of RAM bounds!\n"); }
@@ -268,6 +297,7 @@ bool memoryAndIndexing(bool debugMode, Chip8* chip)
             if (debugMode) { printf("opcode : RAM[I+i] = Vi\n"); }
             return true;
 
+        //0xF65 - Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified.
         case 0x65:
             if (chip->I + x >= 4096) {
                 if (debugMode) { printf("Error: Reg Load out of RAM bounds!\n"); }
@@ -307,40 +337,45 @@ bool IOandP(bool debugMode, Chip8* chip)
     bit8 nnn = (opcode & 0x0FFF);
     
     bit8 indexOp = (opcode & 0x00FF);
-
+    bit8 lowestNibble;
 
     switch (opStart) {
+
+    //0x00E0 - Clears the screen 
     case 0x0:
         memset(chip->screen, 0, sizeof(chip->screen));
         if (debugMode) { printf("opcode = Clear Screen\n"); }
         return true;
 
+    //DXYN - draw sprites. see explenation above function drawSprite
     case 0xD:
         drawSprite(chip, chip->V[x], chip->V[y], n);
         if (debugMode) { printf("opcode : draw sprite in (Vx,Vy) with height N \n"); }
         return true;
          
+    
     case 0xE:
         switch (opEnd)
         {
+            //0xEX9E - Skips the next instruction if the key stored in VX (only consider the lowest nibble) is pressed (usually the next instruction is a jump to skip a code block)
             case 0x9E:
-                if (chip->keys[chip->V[x]] == 1) {
-                    chip->PC += 2;
-                }
+                lowestNibble = chip->V[x] & 0x0F;
+                if (chip->keys[lowestNibble] == 1) { chip->PC += 2;}
+                if (debugMode) { printf("opcode : check if key[vX] is pressed if yes then skip next instruction \n"); }
                 return true;
 
-
+            //0xEXA1 - Skips the next instruction if the key stored in VX(only consider the lowest nibble) is not pressed (usually the next instruction is a jump to skip a code block)
             case 0xA1:
-                if (chip->keys[chip->V[x]] == 0) {
-                    chip->PC += 2;
-                }
+                lowestNibble = chip->V[x] & 0x0F;
+                if (chip->keys[lowestNibble] == 0) { chip->PC += 2; }
+                if (debugMode) { printf("opcode : check if key[vX] is not pressed if yes then skip next instruction \n"); }
                 return true;
 
             default:
                 return false;
         }
         
-       
+    
     case 0xF:
         switch (opEnd)
         {
@@ -360,15 +395,17 @@ bool IOandP(bool debugMode, Chip8* chip)
             }
             return true;
         }
-
+            //0xFX07  - Sets VX to the value of the delay timer
             case 0x07:
                 chip->V[x] = chip->delay_timer;
                 return true;
 
+            //0xFX15 - Sets the delay timer to VX
             case 0x15:
                 chip->delay_timer = chip->V[x];
                 return true;
 
+            //0xFX18 - Sets the sound timer to VX
             case 0x18:
                 chip->sound_timer = chip->V[x];
                 return true;
@@ -377,8 +414,9 @@ bool IOandP(bool debugMode, Chip8* chip)
                 return false;
         }
        
+    //0xCXNN - Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
     case 0xC:
-        chip->V[x] = rand() & nn;
+        chip->V[x] = (rand() % 256) & nn;
         return true;
 
     default:
@@ -404,16 +442,17 @@ bool fetchAndPrcocessOpCode(bool debugMode,Chip8* chip)
     bit8 startWith = (chip->opcode & 0xF000) >> 12;
     bit8 endWith = (chip->opcode & 0x000F);
 
+    //static cases
+    switch (chip->opcode) {
+    case 0x00E0:
+        return IOandP(debugMode, chip);
+    case 0x00EE:
+        return movePC(debugMode, chip);
+    }
+
+
+    //dynamic cases
     switch (startWith) {
-
-        case 0x0:
-            if (chip->opcode == 0x00E0)
-                return IOandP(debugMode, chip);
-            else if (chip->opcode == 0x00EE)
-                return movePC(debugMode, chip);
-            else
-                return false;
-
         case 0x1:
         case 0x2:
         case 0xB:

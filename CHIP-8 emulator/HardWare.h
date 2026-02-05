@@ -9,10 +9,15 @@
 typedef uint8_t  bit8;
 typedef uint16_t bit16;
 
-#define BYTE_SIZE 8
+#define NUM_OF_BITS_IN_BYTE 8
 
 #define MAX_ADDRESS 0xFFF
 #define MIN_ADDRESS 0x000
+
+
+#define PROGRAM_START_ADDRESS 0x200
+
+#define RAM_SIZE 4096
 
 #define MAX_RESEVED_FOR_DISPLAY_ADDRESS 0xFFF
 #define MIN_RESREVED_FOR_DISPLAY_ADDRESS 0xF00
@@ -51,11 +56,10 @@ typedef struct {
 
     bit16 opcode;      
 } Chip8;
-#pragma pack(pop)
+#pragma pack(pop) // Restores the original alignment settings
 
 void initChip8(Chip8* chip);
-void loadFontToChip(Chip8* chip);
-
+bool loadFontToChip(bool debugMode, Chip8* chip);
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height);
 void handleKeyPress(bool debugMode , Chip8* chip, SDL_Event* e);
 

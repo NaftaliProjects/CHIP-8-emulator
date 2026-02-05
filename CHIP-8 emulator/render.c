@@ -3,6 +3,16 @@
 
 
 
+SDL_Renderer* initRenderer()
+{
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    SDL_CreateWindowAndRenderer("Simple Pixel Draw", 640, 320, 0, &window, &renderer);
+    SDL_SetRenderLogicalPresentation(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_LOGICAL_PRESENTATION_STRETCH);
+
+    return renderer;
+}
 
 void renderPixels(SDL_Renderer* renderer, Chip8 *chip) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

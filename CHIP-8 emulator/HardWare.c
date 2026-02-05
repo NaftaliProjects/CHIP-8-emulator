@@ -7,34 +7,65 @@ uint8_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT] = { 0 };
 
 void initChip8(Chip8* chip) {
     memset(chip, 0, sizeof(Chip8));
-    chip->PC = 0x200;
+    chip->PC = PROGRAM_START_ADDRESS;
 }
 
 
 
 
-void loadFontToChip(Chip8* chip)
+bool loadFontToChip(bool debugMode, Chip8* chip)
 {
     FILE* ptr = fopen("font.bin", "rb");
 
     if (ptr == NULL) {
-        printf("Error: Could not open font.bin\n");
-        return; 
+        if (debugMode) { printf("Error: Could not open font.bin\n"); }
+        return false; 
     }
 
     size_t bytesRead = fread(&chip->RAM[FONT_ADDRESS_START], sizeof(bit8), 80, ptr);
 
     if (bytesRead < 80) {
-        printf("Warning: Font file is smaller than expected (read %zu bytes)\n", bytesRead);
+        if (debugMode) { printf("Error: Font file is smaller than expected (read %zu bytes)\n", bytesRead); }
+        return false;
     }
 
     fclose(ptr);
-    printf("Font loaded successfully to address 0x%03X\n", FONT_ADDRESS_START);
+    if (debugMode) { printf("Font loaded successfully to address 0x%03X\n", FONT_ADDRESS_START); } 
+}
+
+
+bool loadRom(bool debugMode, Chip8* chip, FILE* ptr) {
+    if (ptr == NULL) {
+        if (debugMode) { printf("Error: Could not open ROM (NULL pointer)\n"); }
+        return false;
+    }
+
+    size_t bytesRead = fread(&chip->RAM[PROGRAM_START_ADDRESS], sizeof(bit8), (RAM_SIZE - PROGRAM_START_ADDRESS), ptr);
+
+    if (bytesRead == 0) {
+        if (debugMode) { printf("Error: ROM file is empty or could not be read\n"); }
+        fclose(ptr);
+        return false;
+    }
+
+    if (debugMode) {
+        if (debugMode) { printf("ROM loaded successfully. Size: %zu bytes\n", bytesRead); }
+    }
+
+    fclose(ptr);
+    return true;
 }
 
 
 
-
+/*
+*   Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. 
+    Each row of 8 pixels is read as bit-coded starting from memory location I; 
+    I value does not change after the execution of this instruction. 
+    As described above, 
+    VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, 
+    and to 0 if that does not happen.
+*/
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height) {
     bit16 spriteAddr = chip->I;
 
@@ -43,14 +74,14 @@ void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height) {
 
         chip->V[0xF] = 0;
 
-        for (int bit = 0; bit < BYTE_SIZE; bit++) {
+        for (int bit = 0; bit < NUM_OF_BITS_IN_BYTE; bit++) {
 
-            bit8 pixel = (spriteRow >> (BYTE_SIZE - bit - 1)) & 0x1;
+            bit8 pixel = (spriteRow >> (NUM_OF_BITS_IN_BYTE - bit - 1)) & 0x1;
 
             if (pixel == 1) {
-                int targetX = (x + bit) % 64;
-                int targetY = (y + i) % 32;
-                int index = targetX + (targetY * 64);
+                int targetX = (x + bit) % SCREEN_WIDTH;
+                int targetY = (y + i) % SCREEN_HEIGHT;
+                int index = targetX + (targetY * SCREEN_WIDTH);
 
                 if (chip->screen[index] == 1) {
                     chip->V[0xF] = 1;
