@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     loadFontToChip(debugMode ,&chip8);
     
     //load ROM
-    FILE* ptr = fopen("C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\15_Puzzle.ch8", "rb");
+    FILE* ptr = fopen("C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\Hires Worm V4 [RB-Revival Studios, 2007].ch8", "rb");
     if (!loadRom(debugMode, &chip8, ptr)) { return errno; }
 
     SDL_Renderer* renderer = initRenderer();
@@ -28,33 +28,36 @@ int main(int argc, char* argv[]) {
     SDL_Event e;
     
 
+
+    const int CLOCK_SPEED = 700; 
+    const int TARGET_FPS = 60;
+    const int TICKS_PER_FRAME = CLOCK_SPEED / TARGET_FPS; 
+
     while (!quit) {
+        Uint32 startTick = SDL_GetTicks();
 
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) quit = true;
-
-            handleKeyPress(debugMode , &chip8, &e);
+            handleKeyPress(debugMode, &chip8, &e);
         }
 
-        for (int i = 0; i <3; i++) {
+     
+        for (int i = 0; i < TICKS_PER_FRAME; i++) {
             fetchAndPrcocessOpCode(debugMode, &chip8);
         }
 
-        Uint32 now = SDL_GetTicks();
-        if (now - lastTimerTick >= 16) {
-            if (chip8.delay_timer > 0)
-                chip8.delay_timer--;
+        
+        if (chip8.delay_timer > 0) chip8.delay_timer--;
+        if (chip8.sound_timer > 0) chip8.sound_timer--;
 
-            if (chip8.sound_timer > 0)
-                chip8.sound_timer--;
-
-            lastTimerTick = now;
-        }
-
+       
         renderPixels(renderer, &chip8);
-        SDL_Delay(1);   
 
-
+       
+        Uint32 frameTicks = SDL_GetTicks() - startTick;
+        if (frameTicks < 1000 / TARGET_FPS) {
+            SDL_Delay((1000 / TARGET_FPS) - frameTicks);
+        }
     }
 
 
