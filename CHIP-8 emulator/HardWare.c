@@ -8,6 +8,7 @@ uint8_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT] = { 0 };
 void initChip8(Chip8* chip) {
     memset(chip, 0, sizeof(Chip8));
     chip->PC = PROGRAM_START_ADDRESS;
+    chip->useClipping = true;
 }
 
 
@@ -68,31 +69,63 @@ bool loadRom(bool debugMode, Chip8* chip, FILE* ptr) {
 */
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height) {
     bit16 spriteAddr = chip->I;
+    chip->V[0xF] = 0; 
 
     for (int i = 0; i < height; i++) {
+        
         bit8 spriteRow = chip->RAM[spriteAddr + i];
 
-        chip->V[0xF] = 0;
+        for (int bit = 0; bit < 8; bit++) {
+            
+            bit8 pixel = (spriteRow >> (7 - bit)) & 0x1;
+            int targetX = x + bit;
+            int targetY = y + i;
 
-        for (int bit = 0; bit < NUM_OF_BITS_IN_BYTE; bit++) {
+            if (chip->useClipping) { xorPixelWithClipping(chip, pixel, targetX, targetY); }
+            else { xorPixel(chip, pixel, targetX, targetY); }
 
-            bit8 pixel = (spriteRow >> (NUM_OF_BITS_IN_BYTE - bit - 1)) & 0x1;
 
-            if (pixel == 1) {
-                int targetX = (x + bit) % SCREEN_WIDTH;
-                int targetY = (y + i) % SCREEN_HEIGHT;
-                int index = targetX + (targetY * SCREEN_WIDTH);
-
-                if (chip->screen[index] == 1) {
-                    chip->V[0xF] = 1;
-                }
-
-                chip->screen[index] ^= 1;
-            }
+                
+                
         }
     }
 }
 
+void xorPixelWithClipping(Chip8* chip, bit8 pixel , int targetX, int targetY)
+{
+    if (pixel == 0)
+        return;
+
+    if (targetX >= SCREEN_WIDTH || targetY >= SCREEN_HEIGHT || targetX < 0 || targetY < 0) {
+        return;
+    }
+
+    int index = targetX + (targetY * SCREEN_WIDTH);
+
+
+    if (chip->screen[index] == 1) {
+        chip->V[0xF] = 1;
+    }
+
+
+    chip->screen[index] ^= 1;
+}
+
+void xorPixel(Chip8* chip, bit8 pixel, int targetX, int targetY) {
+    if (pixel == 0)
+        return;
+
+    int wrappedX = (targetX % SCREEN_WIDTH + SCREEN_WIDTH) % SCREEN_WIDTH;
+    int wrappedY = (targetY % SCREEN_HEIGHT + SCREEN_HEIGHT) % SCREEN_HEIGHT;
+
+    int index = wrappedX + (wrappedY * SCREEN_WIDTH);
+
+    if (chip->screen[index] == 1) {
+        chip->V[0xF] = 1;
+    }
+
+    chip->screen[index] ^= 1;
+}
 
 void handleKeyPress(bool debugMode, Chip8* chip, SDL_Event* e)
 {

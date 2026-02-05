@@ -32,8 +32,8 @@ typedef uint16_t bit16;
 #define SIZE_OF_FONT_INSTANCE 5
 
 
-#define SCREEN_WIDTH 64
-#define SCREEN_HEIGHT 32
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
 
 #pragma pack(push, 1)
 typedef struct {
@@ -55,11 +55,16 @@ typedef struct {
     bit8 keys[16];
 
     bit16 opcode;      
+
+    //flags
+    bool useClipping;
 } Chip8;
 #pragma pack(pop) // Restores the original alignment settings
 
 void initChip8(Chip8* chip);
 bool loadFontToChip(bool debugMode, Chip8* chip);
+void xorPixelWithClipping(Chip8* chip, bit8 pixel, int targetX, int targetY);
+void xorPixel(Chip8* chip, bit8 pixel, int targetX, int targetY);
 void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height);
 void handleKeyPress(bool debugMode , Chip8* chip, SDL_Event* e);
 
