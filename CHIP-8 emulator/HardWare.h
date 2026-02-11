@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h> 
 #include <SDL3/SDL.h>
+#include "ini.h"
 
 typedef uint8_t  bit8;
 typedef uint16_t bit16;
@@ -32,11 +33,25 @@ typedef uint16_t bit16;
 #define SIZE_OF_FONT_INSTANCE 5
 
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-
 #pragma pack(push, 1)
 typedef struct {
+    struct {
+        // Video
+        int screenWidth;
+        int screenHeight;
+        bool useClipping;
+
+        // CPU
+        int clockSpeed;
+        int targetFPS;
+        int chipQuirks;
+
+        // Appearance (RGBA format)
+        uint32_t colorPixel;
+        uint32_t colorBG;
+    } config;
+
+    //Registers
     bit8  V[16];        //  V0-VF
     bit16 PC;           // Program Counter 
     bit16 I;            // Index Register 
@@ -46,22 +61,21 @@ typedef struct {
     bit16 stack[16];    
     bit8  SP;           // Stack Pointer 
 
+    //Memory
     bit8  RAM[4096];   
-
-    bit8  screen[SCREEN_WIDTH * SCREEN_HEIGHT];
+    bit8  *screen;
     bit8  delay_timer;
     bit8  sound_timer;
-
     bit8 keys[16];
 
     bit16 opcode;      
-
-    //flags
-    bool useClipping;
+  
 } Chip8;
 #pragma pack(pop) // Restores the original alignment settings
 
+void loadConfig(Chip8* chip, const char* filename);
 void initChip8(Chip8* chip);
+bool loadRom(bool debugMode, Chip8* chip, FILE* ptr);
 bool loadFontToChip(bool debugMode, Chip8* chip);
 void xorPixelWithClipping(Chip8* chip, bit8 pixel, int targetX, int targetY);
 void xorPixel(Chip8* chip, bit8 pixel, int targetX, int targetY);

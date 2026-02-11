@@ -2,16 +2,89 @@
 
 
 
-uint8_t pixels[SCREEN_WIDTH * SCREEN_HEIGHT] = { 0 };
 
+static int handler(void* user, const char* section, const char* name, const char* value)
+{
+    Chip8* pchip = (Chip8*)user;
 
-void initChip8(Chip8* chip) {
-    memset(chip, 0, sizeof(Chip8));
-    chip->PC = PROGRAM_START_ADDRESS;
-    chip->useClipping = true;
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+
+    // Video Section
+    if (MATCH("Video", "SCREEN_WIDTH")) {
+        pchip->config.screenWidth = atoi(value);
+    }
+    else if (MATCH("Video", "SCREEN_HEIGHT")) {
+        pchip->config.screenHeight = atoi(value);
+    }
+    else if (MATCH("Video", "USE_CLIPPING")) {
+        pchip->config.useClipping = (atoi(value) != 0);
+    }
+
+    // CPU Section
+    else if (MATCH("CPU", "CLOCK_SPEED")) {
+        pchip->config.clockSpeed = atoi(value);
+    }
+    else if (MATCH("CPU", "TARGET_FPS")) {
+        pchip->config.targetFPS = atoi(value);
+    }
+    else if (MATCH("CPU", "CHIP_QUIRKS")) {
+        pchip->config.chipQuirks = atoi(value);
+    }
+
+    // Appearance Section (Parsing Hex)
+    else if (MATCH("Appearance", "COLOR_PIXEL")) {
+        pchip->config.colorPixel = (uint32_t)strtoul(value, NULL, 0);
+    }
+    else if (MATCH("Appearance", "COLOR_BG")) {
+        pchip->config.colorBG = (uint32_t)strtoul(value, NULL, 0);
+    }
+
+    else {
+        return 0;  /* Unknown section/name */
+    }
+    return 1;
 }
 
 
+void initChip8(Chip8* chip) {
+    
+
+    if (chip->screen != NULL) {
+        free(chip->screen);
+    }
+
+    memset(chip, 0, sizeof(Chip8));
+    loadConfig(chip, "hardWare.ini");
+    chip->PC = PROGRAM_START_ADDRESS;
+
+    //allocate memory for dynamic screen size
+    int area = chip->config.screenWidth * chip->config.screenHeight;
+    if (area <= 0) area = 64 * 32;
+    chip->screen = calloc(area, sizeof(bit8));
+
+   
+}
+
+
+
+
+bool loadConfig(Chip8* chip, const char* filename) {
+    FILE* file = fopen(filename, "r");
+
+    //default params
+    chip->config.screenWidth = 64;
+    chip->config.screenHeight = 32;
+    chip->config.useClipping = true;
+    chip->config.clockSpeed = 500;
+    chip->config.targetFPS = 60;
+
+    if (ini_parse(filename, handler, chip) < 0) {
+        printf("Can't load 'hardWare.ini'\n");
+        return false;
+    }
+
+    return true;
+}
 
 
 bool loadFontToChip(bool debugMode, Chip8* chip)
@@ -20,7 +93,7 @@ bool loadFontToChip(bool debugMode, Chip8* chip)
 
     if (ptr == NULL) {
         if (debugMode) { printf("Error: Could not open font.bin\n"); }
-        return false; 
+        return true; 
     }
 
     size_t bytesRead = fread(&chip->RAM[FONT_ADDRESS_START], sizeof(bit8), 80, ptr);
@@ -81,12 +154,9 @@ void drawSprite(Chip8* chip, bit8 x, bit8 y, bit8 height) {
             int targetX = x + bit;
             int targetY = y + i;
 
-            if (chip->useClipping) { xorPixelWithClipping(chip, pixel, targetX, targetY); }
+            if (chip->config.useClipping) { xorPixelWithClipping(chip, pixel, targetX, targetY); }
             else { xorPixel(chip, pixel, targetX, targetY); }
-
-
-                
-                
+        
         }
     }
 }
@@ -96,11 +166,11 @@ void xorPixelWithClipping(Chip8* chip, bit8 pixel , int targetX, int targetY)
     if (pixel == 0)
         return;
 
-    if (targetX >= SCREEN_WIDTH || targetY >= SCREEN_HEIGHT || targetX < 0 || targetY < 0) {
+    if (targetX >= chip->config.screenWidth || targetY >= chip->config.screenHeight || targetX < 0 || targetY < 0) {
         return;
     }
 
-    int index = targetX + (targetY * SCREEN_WIDTH);
+    int index = targetX + (targetY * chip->config.screenWidth);
 
 
     if (chip->screen[index] == 1) {
@@ -115,10 +185,12 @@ void xorPixel(Chip8* chip, bit8 pixel, int targetX, int targetY) {
     if (pixel == 0)
         return;
 
-    int wrappedX = (targetX % SCREEN_WIDTH + SCREEN_WIDTH) % SCREEN_WIDTH;
-    int wrappedY = (targetY % SCREEN_HEIGHT + SCREEN_HEIGHT) % SCREEN_HEIGHT;
+    int screen_width = chip->config.screenWidth;
+    int screen_heigth = chip->config.screenHeight;
+    int wrappedX = (targetX % 2*screen_width) % screen_width;
+    int wrappedY = (targetY % screen_heigth + screen_heigth) % screen_heigth;
 
-    int index = wrappedX + (wrappedY * SCREEN_WIDTH);
+    int index = wrappedX + (wrappedY * screen_width);
 
     if (chip->screen[index] == 1) {
         chip->V[0xF] = 1;

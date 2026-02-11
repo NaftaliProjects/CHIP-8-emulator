@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
     bool debugMode = true;
     bool quit = false;
 
-    Chip8 chip8;
+    Chip8 chip8 = { 0 };
     initChip8(&chip8);
     loadFontToChip(debugMode ,&chip8);
     
@@ -22,16 +22,16 @@ int main(int argc, char* argv[]) {
     FILE* ptr = fopen("C:\\Temp\\Lab\\VisualStudio\\C\\ROMS\\Hires Worm V4 [RB-Revival Studios, 2007].ch8", "rb");
     if (!loadRom(debugMode, &chip8, ptr)) { return errno; }
 
-    SDL_Renderer* renderer = initRenderer();
+    SDL_Renderer* renderer = initRenderer(chip8.config.screenWidth, chip8.config.screenHeight);
     Uint64 lastTimerTick = SDL_GetTicks();
 
     SDL_Event e;
     
 
+    int clockSpeed = chip8.config.clockSpeed;
+    int targetFPS = chip8.config.targetFPS;
+    int ticksPerFrame = clockSpeed / targetFPS;
 
-    const int CLOCK_SPEED = 700; 
-    const int TARGET_FPS = 60;
-    const int TICKS_PER_FRAME = CLOCK_SPEED / TARGET_FPS; 
 
     while (!quit) {
         Uint32 startTick = SDL_GetTicks();
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
         }
 
      
-        for (int i = 0; i < TICKS_PER_FRAME; i++) {
+        for (int i = 0; i < ticksPerFrame; i++) {
             fetchAndPrcocessOpCode(debugMode, &chip8);
         }
 
@@ -51,12 +51,12 @@ int main(int argc, char* argv[]) {
         if (chip8.sound_timer > 0) chip8.sound_timer--;
 
        
-        renderPixels(renderer, &chip8);
+        renderPixels(renderer, &chip8, chip8.config.screenWidth, chip8.config.screenHeight);
 
        
         Uint32 frameTicks = SDL_GetTicks() - startTick;
-        if (frameTicks < 1000 / TARGET_FPS) {
-            SDL_Delay((1000 / TARGET_FPS) - frameTicks);
+        if (frameTicks < 1000 / targetFPS) {
+            SDL_Delay((1000 / targetFPS) - frameTicks);
         }
     }
 

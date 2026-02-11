@@ -198,12 +198,14 @@ bool bitWiseOp(bool debugMode, Chip8* chip)
     //0x8XY1 - Sets VX to VX or VY. (bitwise OR operation)
     case 0x1:
         chip->V[x] |= chip->V[y];
+        chip->V[0xF] = 0;
         if (debugMode) { printf("Vx = Vx OR Vy\n"); }
         return true;
 
     //8XY2 - Sets VX to VX and VY. (bitwise AND operation)
     case 0x2:
         chip->V[x] &= chip->V[y];
+        chip->V[0xF] = 0;
         if (debugMode) { printf("Vx = Vx AND Vy\n"); }
         return true;
 
@@ -211,24 +213,29 @@ bool bitWiseOp(bool debugMode, Chip8* chip)
     //0x8XY3 - Sets VX to (VX xor VY)
     case 0x3:
         chip->V[x] ^= chip->V[y];
+        chip->V[0xF] = 0;
         if (debugMode) { printf("Vx = Vx XOR Vy\n"); }
         return true;
     
     //0x8XY6 - Shifts VX to the right by 1, then stores the least significant bit of VX prior to the shift into VF
     case 0x6: 
         //CHIP-48 and SCHIP implementation
-        chip->V[0xF] = chip->V[x] & 0x1;    
-        chip->V[x] >>= 1;
-        //original implemetaion such as COSMAC VIP :  chip->V[0xF] = chip->V[y] & 0x1; chip->V[x] = chip->V[y] >> 1;
+        //chip->V[0xF] = chip->V[x] & 0x1;    
+        //chip->V[x] >>= 1;
+        //original implemetaion such as COSMAC VIP :  
+        chip->V[0xF] = chip->V[y] & 0x1; 
+        chip->V[x] = chip->V[y] >> 1;
         if (debugMode) { printf("VF = VX AND  0x1\n"); }
         return true;
 
     //0x8XYE - Shifts VX to the left by 1, then sets VF to 1 if the most significant bit of VX prior to that shift was set, or to 0 if it was unset
     case 0xE: 
         //CHIP-48 and SCHIP implementation
-        chip->V[0xF] = (chip->V[x] & 0x80) >> 7; //sets VF to 1 or 0 dependes on the MSB of VX
-        chip->V[x] <<= 1;
-        //original implemetaion such as COSMAC VIP : chip->V[0xF] = (chip->V[y] & 0x80) >> 7; chip->V[x] = chip->V[y] <<  1;
+        //chip->V[0xF] = (chip->V[x] & 0x80) >> 7; //sets VF to 1 or 0 dependes on the MSB of VX
+        //chip->V[x] <<= 1;
+        //original implemetaion such as COSMAC VIP : 
+        chip->V[0xF] = (chip->V[y] & 0x80) >> 7; 
+        chip->V[x] = chip->V[y] <<  1;
         if (debugMode) { printf("VF = MSB of VX, VX <<= 1\n"); }
         return true;
 
@@ -339,11 +346,14 @@ bool IOandP(bool debugMode, Chip8* chip)
     bit8 indexOp = (opcode & 0x00FF);
     bit8 lowestNibble;
 
+    int area;
+
     switch (opStart) {
 
     //0x00E0 - Clears the screen 
     case 0x0:
-        memset(chip->screen, 0, sizeof(chip->screen));
+        area = chip->config.screenHeight * chip->config.screenWidth;
+        memset(chip->screen, 0, area);
         if (debugMode) { printf("opcode = Clear Screen\n"); }
         return true;
 
